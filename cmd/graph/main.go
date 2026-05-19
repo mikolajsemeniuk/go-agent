@@ -40,6 +40,21 @@ type exchange struct {
 	Customer    string // current customer record (JSON) from the MCP server
 }
 
+// updatePlanSchema is the JSON Schema Ollama enforces (via the `format` field)
+// on the chat model's reply in node 4. Constrained decoding then guarantees the
+// reply parses into the plan struct: exactly these three string fields, no
+// extra keys.
+const updatePlanSchema = `{
+  "type": "object",
+  "properties": {
+    "name":    {"type": "string"},
+    "country": {"type": "string"},
+    "email":   {"type": "string"}
+  },
+  "required": ["name", "country", "email"],
+  "additionalProperties": false
+}`
+
 func main() {
 	ctx := context.Background()
 
@@ -77,6 +92,7 @@ func main() {
 		BaseURL: agent.OllamaBaseURL,
 		Model:   agent.ChatModel,
 		Timeout: 5 * time.Minute,
+		Format:  json.RawMessage(updatePlanSchema),
 	})
 	if err != nil {
 		log.Fatal(err)
